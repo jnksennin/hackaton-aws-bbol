@@ -7,7 +7,7 @@ El Asistente de Salud Financiera Agéntico es un sistema conversacional basado e
 **Decisión clave de arquitectura:** Amazon Bedrock Agents como orquestador central (vs implementación custom) para acelerar desarrollo en hackathon y aprovechar capacidades nativas de RAG, Guardrails y streaming.
 
 **Modelo base seleccionado:** Claude 4.5 Sonnet
-- **Justificación:** Balance óptimo entre capacidad de razonamiento (necesaria para análisis financiero complejo), latencia (<3s P95), y costo para demo. Haiku sacrifica precisión en cálculos multi-paso; Opus excede presupuesto sin beneficio demostrable en hackathon.
+- **Justificación:** Balance óptimo entre capacidad de razonamiento (necesaria para análisis financiero complejo), latencia (estrictamente < 3s P95), y costo para demo. Haiku sacrifica precisión en cálculos multi-paso; Opus excede presupuesto sin beneficio demostrable en hackathon.
 
 **Alcance de hackathon:**
 - ✅ **Implementable:** ISF calculation, gastos hormiga detection, subscription analysis, Guardrails demo, streaming UI, CloudWatch dashboard básico
@@ -129,12 +129,12 @@ graph TB
   - Nivel de ahorro (25%): `(ahorro_mensual / ingresos) * 100`
   - Carga de deuda (25%): `max(0, 100 - (deuda_total / ingresos_anuales) * 100)`
   - Estabilidad de ingresos (20%): `100 - (std_dev(ingresos_3_meses) / mean(ingresos_3_meses)) * 100`
-- **Performance:** <500ms (requisito 1.6 contribuye a P95 <3s)
+- **Performance:** <500ms (requisito 1.6 contribuye a P95 estrictamente < 3s)
 
 **L2: Transaction Analyzer**
 - **Input:** `client_id`, `analysis_type` (gastos_hormiga | suscripciones)
 - **Output:** Para gastos hormiga: `categories` (top 3), `total`, `percentage_of_income`. Para suscripciones: `subscriptions` (list), `monthly_total`, `annual_total`
-- **Lógica gastos hormiga:** Filtrar transacciones <$10, agrupar por categoría, ordenar por monto total
+- **Lógica gastos hormiga:** Filtrar transacciones <$10, agrupar por categoría, ordenar por monto total. Generar alerta proactiva si total ≥15% del ingreso mensual, independientemente del monto absoluto de gastos o nivel de ingresos.
 - **Lógica suscripciones:** Detectar patrones recurrentes (mismo merchant, monto ±$2, frecuencia mensual en 3 meses)
 
 **L3: Liquidity Alerter**
@@ -207,7 +207,7 @@ CAPACIDADES:
 RESTRICCIONES:
 - NUNCA proporciones información de otros clientes
 - NUNCA solicites PINs, contraseñas o números completos de tarjetas
-- Si no tienes información, sugiere contactar a un asesor humano
+- Si no tienes información suficiente, indica claramente que no tienes esa información disponible
 - Identifícate siempre como un asistente de IA
 
 FORMATO DE RESPUESTAS:
@@ -674,16 +674,20 @@ interface GuardrailBadgeProps {
 interface StreamingMessageProps {
   content: string;
   isStreaming: boolean;
+  isTimeout?: boolean;             // True when response exceeded 3s strict timeout
+  fallbackMessage?: string;        // Fallback message shown on timeout
   sources?: Array<{
     title: string;
     url: string;
   }>;
+  showCitationBadge?: boolean;     // Only true when KB information is sufficient
 }
 
 // CSS Tokens utilizados:
-// - --bb-state-info-bg y --bb-state-info-border para badges de fuentes
+// - --bb-state-info-bg y --bb-state-info-border para badges de fuentes (solo cuando showCitationBadge=true)
 // - Animación de "pensando" con Design System BB
 // - Tipografía: Lexend
+// - Timeout fallback: mostrar mensaje de error con opción de reintentar
 ```
 
 
@@ -1002,7 +1006,7 @@ Combinado con tu ahorro actual de $270/mes, ¡superarías tu meta! 🎯
 
 **Componentes DS activados:**
 - `GastosHormigaList` con categorías top 3
-- Badge de alerta con `--bb-state-warning-bg` (gastos hormiga >10%)
+- Badge de alerta con `--bb-state-warning-bg` (gastos hormiga ≥15% del ingreso, independiente del monto absoluto)
 - Tipografía Lexend
 
 ---
@@ -1066,7 +1070,7 @@ Para consultar tu número de tarjeta completo, puedes:
 2. Consultar Knowledge Base con query: "tasas interés cuentas ahorro"
 3. Recuperar top 3 chunks relevantes de `cuentas-de-ahorro.pdf`
 4. Sintetizar respuesta con información recuperada
-5. Incluir citación de fuente
+5. Incluir citación de fuente (solo si la información recuperada es suficiente para responder la consulta)
 
 **Action Groups invocados:**
 - Ninguno (respuesta directa desde Knowledge Base)
@@ -1091,6 +1095,7 @@ Las cuentas de ahorro del Banco Bolivariano ofrecen las siguientes tasas:
 • Sin comisiones de mantenimiento
 
 📚 **Fuente:** Documento oficial de Cuentas de Ahorro - Banco Bolivariano
+(Badge de citación mostrado porque la KB proporcionó información suficiente)
 
 ¿Te gustaría que te ayude a calcular cuánto ganarías en intereses con tu saldo actual?
 ```
@@ -1207,7 +1212,7 @@ print(f"QA Accuracy Score: {qa_accuracy_results[0].value}")
 ```
 Métrica: AgentLatency
 Estadísticas: p50, p95, p99
-Objetivo: P95 < 3000ms
+Objetivo: P95 estrictamente < 3000ms
 Visualización: Line chart con 3 líneas
 ```
 
@@ -1320,7 +1325,7 @@ dashboard.addWidgets(new cloudwatch.SingleValueWidget({
 **Alarmas configuradas:**
 
 ```typescript
-// Alarma: Latencia P95 > 3s
+// Alarma: Latencia P95 >= 3s (estrictamente debe ser menor)
 new cloudwatch.Alarm(this, 'HighLatencyAlarm', {
   metric: new cloudwatch.Metric({
     namespace: 'FinancialAssistant',
@@ -1328,8 +1333,9 @@ new cloudwatch.Alarm(this, 'HighLatencyAlarm', {
     statistic: 'p95',
   }),
   threshold: 3000,
+  comparisonOperator: cloudwatch.ComparisonOperator.GREATER_THAN_OR_EQUAL_TO_THRESHOLD,
   evaluationPeriods: 2,
-  alarmDescription: 'Agent P95 latency exceeded 3 seconds',
+  alarmDescription: 'Agent P95 latency must be strictly less than 3 seconds (REQ-1.6, REQ-7.2)',
 });
 
 // Alarma: Error rate > 5%
@@ -1779,6 +1785,7 @@ print("✅ All evaluation thresholds passed")
   "Lo siento, estoy experimentando dificultades técnicas. Por favor intenta nuevamente en unos momentos o contacta a nuestro centro de atención: 5505050."
   ```
 - Implementado en API Gateway con Lambda authorizer que detecta errores 5xx de Bedrock
+- **Timeout con fallback (REQ-7.2):** Si una respuesta excede estrictamente los 3 segundos, el sistema aplica timeout automáticamente y muestra un mensaje de error o respuesta de fallback al cliente sin dejar la operación colgada
 
 ✅ **Multi-AZ**
 - DynamoDB: replicación automática multi-AZ (default)
@@ -1827,6 +1834,7 @@ print("✅ All evaluation thresholds passed")
 ✅ **Streaming**
 - Respuestas transmitidas vía WebSocket en chunks de 50 tokens
 - Latencia percibida: usuario ve primeras palabras en <800ms (vs 2.1s para respuesta completa)
+- **Timeout estricto (REQ-7.2):** Si una respuesta excede estrictamente los 3 segundos, el sistema aplica timeout y muestra un mensaje de error o respuesta de fallback al cliente. El 95% de las respuestas deben completarse en estrictamente menos de 3 segundos.
 
 ✅ **Prompt Caching**
 - System prompt del agente (500 tokens) cacheado por Bedrock
@@ -2028,7 +2036,7 @@ Después de analizar los 48 acceptance criteria en el prework, identifiqué 28 p
 
 ### Property 4: Gastos Hormiga Alert Threshold
 
-*For any* transaction set where the total gastos hormiga exceeds 15% of monthly income, the system SHALL generate a proactive alert with savings recommendations.
+*For any* transaction set where the total gastos hormiga is greater than or equal to 15% of monthly income (≥15%), the system SHALL generate a proactive alert with savings recommendations, regardless of the absolute amount of expenses or the client's income level.
 
 **Validates: Requirements 2.5**
 
@@ -2084,7 +2092,7 @@ Después de analizar los 48 acceptance criteria en el prework, identifiqué 28 p
 
 ### Property 11: Knowledge Base Citation
 
-*For any* response sourced from the Knowledge Base, the system SHALL include a citation badge with `--bb-state-info-bg` and `--bb-state-info-border` CSS tokens, and SHALL reference the source document.
+*For any* response sourced from the Knowledge Base, the system SHALL include a citation badge with `--bb-state-info-bg` and `--bb-state-info-border` CSS tokens, and SHALL reference the source document, ONLY when the information retrieved is sufficient to answer the client's query. If information is insufficient, no citation badge SHALL be displayed.
 
 **Validates: Requirements 5.3**
 
@@ -2092,7 +2100,7 @@ Después de analizar los 48 acceptance criteria en el prework, identifiqué 28 p
 
 ### Property 12: Knowledge Base Fallback
 
-*For any* query where the Knowledge Base does not contain sufficient information, the system SHALL explicitly indicate the information is not available and SHALL suggest contacting a human advisor.
+*For any* query where the Knowledge Base does not contain sufficient information, the system SHALL explicitly indicate that it does not have that information available, without mandating any specific escalation path.
 
 **Validates: Requirements 5.5**
 
@@ -2116,7 +2124,7 @@ Después de analizar los 48 acceptance criteria en el prework, identifiqué 28 p
 
 ### Property 15: Guardrail Audit Logging
 
-*For any* Guardrail rejection event, the system SHALL create an audit log entry in DynamoDB with session_id, client_id, timestamp, guardrail_reason, and SHALL mark guardrail_triggered as true.
+*For any* Guardrail rejection event, the system SHALL attempt to create an audit log entry in DynamoDB with session_id, client_id, timestamp, guardrail_reason, and SHALL mark guardrail_triggered as true. If the audit log write fails, the system SHALL continue processing the client's request without blocking the operation.
 
 **Validates: Requirements 6.6**
 
@@ -2191,6 +2199,17 @@ Después de analizar los 48 acceptance criteria en el prework, identifiqué 28 p
   technical_details: 'Bedrock InvokeAgent timeout after 30s',
   retry_strategy: 'Exponential backoff: 1s, 2s, 4s',
   fallback: 'Return cached ISF if available, otherwise generic error message'
+}
+```
+
+**Error: Response Timeout (>3s strict P95 threshold)**
+```typescript
+{
+  error_code: 'RESPONSE_TIMEOUT',
+  user_message: 'La respuesta excedió el tiempo límite. Mostrando respuesta alternativa.',
+  technical_details: 'Response exceeded strict 3s P95 timeout threshold (REQ-7.2)',
+  fallback: 'Apply timeout and show error message or fallback response to client',
+  behavior: 'System MUST apply timeout at 3s and display fallback — response must NOT silently hang'
 }
 ```
 
@@ -2290,9 +2309,9 @@ Después de analizar los 48 acceptance criteria en el prework, identifiqué 28 p
 ```typescript
 {
   error_code: 'KB_NO_RESULTS',
-  user_message: 'No tengo información específica sobre eso en este momento. Te sugiero contactar a un asesor para más detalles: 1800-BOLIVAR.',
+  user_message: 'No tengo esa información disponible en este momento.',
   technical_details: 'Bedrock Retrieve returned 0 results or confidence < 0.5',
-  fallback: 'Provide general information + escalation to human'
+  fallback: 'Indicate information is not available without mandating advisor contact'
 }
 ```
 
@@ -2316,7 +2335,7 @@ Después de analizar los 48 acceptance criteria en el prework, identifiqué 28 p
   error_code: 'GUARDRAIL_BLOCKED',
   user_message: 'Lo siento, no puedo procesar esa consulta por razones de seguridad. 🛡️ Protegido por Guardrails de Seguridad.',
   technical_details: 'Guardrail blocked due to: [PII_DETECTED | PROHIBITED_TOPIC | PROMPT_ATTACK]',
-  audit_action: 'Log to DynamoDB and S3 with full context',
+  audit_action: 'Log to DynamoDB (non-blocking) and S3 with full context. If DynamoDB audit write fails, continue processing without blocking the operation.',
   user_guidance: 'Explain why blocked and provide alternative actions'
 }
 ```
@@ -2628,8 +2647,9 @@ describe('Knowledge Base', () => {
       client_id: 'client-001'
     });
     
-    expect(response.response).toContain('no tengo información');
-    expect(response.response).toContain('asesor');
+    expect(response.response).toContain('no tengo esa información disponible');
+    // No longer mandates suggesting to contact an advisor (REQ-5.5)
+    expect(response.sources).toBeUndefined(); // No citation badge when info is insufficient (REQ-5.3)
   });
 });
 ```
@@ -3029,9 +3049,10 @@ describe('E2E: ISF Calculation Flow', () => {
 - Throughput (requests/second)
 
 **Acceptance Criteria:**
-- P95 latency < 3000ms under baseline load
+- P95 latency strictly < 3000ms under baseline load (REQ-7.2)
 - Error rate < 1% under peak load
 - System remains stable (no crashes) under stress test
+- Responses exceeding 3s must trigger timeout and show fallback message (REQ-7.2)
 
 ```yaml
 # artillery-config.yml
@@ -3128,11 +3149,11 @@ scenarios:
 - User: "¿Qué tasas tienen las cuentas de ahorro?"
 - Agent retrieves from Knowledge Base
 - Response includes rates for 3 account types
-- Highlight: Citation badge with `--bb-state-info-bg` and source document
+- Highlight: Citation badge with `--bb-state-info-bg` and source document (badge only shown because KB info is sufficient per REQ-5.3)
 
 **Minute 5: Observability + GenOps**
 - Show CloudWatch dashboard:
-  - Latency P95: 2.1s ✅ (target <3s)
+  - Latency P95: 2.1s ✅ (target strictly < 3s)
   - Guardrail block rate: 8% ✅
   - Tokens per session: 1,850 avg ✅
 - Show FMEval results:
@@ -3148,7 +3169,7 @@ scenarios:
 | Metric | Target | Actual (Demo) | Status |
 |--------|--------|---------------|--------|
 | **Performance** |
-| P95 Latency | <3000ms | 2100ms | ✅ |
+| P95 Latency | < 3000ms (strict) | 2100ms | ✅ |
 | Streaming First Token | <800ms | 650ms | ✅ |
 | **Quality** |
 | Faithfulness (FMEval) | ≥0.85 | 0.87 | ✅ |

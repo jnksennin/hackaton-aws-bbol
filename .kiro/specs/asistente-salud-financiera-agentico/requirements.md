@@ -70,7 +70,7 @@ Transformar datos transaccionales pasivos en inteligencia financiera proactiva m
 3. THE Lambda_Function SHALL retornar un score numérico entre 0 y 100 con precisión de dos decimales
 4. THE Agente_Conversacional SHALL presentar el ISF con interpretación textual: "Excelente" (80-100), "Bueno" (60-79), "Regular" (40-59), "Crítico" (0-39)
 5. THE Agente_Conversacional SHALL mostrar el ISF con indicador visual de color: verde para scores ≥60, rojo para scores <60
-6. THE Agente_Conversacional SHALL completar el cálculo y presentación del ISF en menos de 3 segundos (P95)
+6. THE Agente_Conversacional SHALL completar el cálculo y presentación del ISF en estrictamente menos de 3 segundos (< 3s, P95)
 
 ### Requirement 2: Identificación de Gastos Hormiga
 
@@ -84,7 +84,7 @@ Transformar datos transaccionales pasivos en inteligencia financiera proactiva m
 2. THE Lambda_Function SHALL filtrar transacciones menores a $10 USD y agruparlas por categoría (cafeterías, snacks, transporte, apps)
 3. THE Lambda_Function SHALL calcular el total acumulado de Gasto_Hormiga y su porcentaje respecto al ingreso mensual
 4. THE Agente_Conversacional SHALL presentar las top 3 categorías de Gasto_Hormiga con monto total y frecuencia
-5. IF el Gasto_Hormiga supera el 15% del ingreso mensual, THEN THE Agente_Conversacional SHALL generar una alerta proactiva con recomendaciones de ahorro
+5. IF el Gasto_Hormiga es mayor o igual al 15% del ingreso mensual (≥15%), THEN THE Agente_Conversacional SHALL generar una alerta proactiva con recomendaciones de ahorro, independientemente del monto absoluto de gastos o nivel de ingresos
 6. THE Agente_Conversacional SHALL visualizar los gastos hormiga en un formato de lista agrupada por categoría
 
 ### Requirement 3: Detección de Suscripciones Recurrentes
@@ -127,9 +127,9 @@ Transformar datos transaccionales pasivos en inteligencia financiera proactiva m
 
 1. WHEN el Cliente pregunta sobre productos financieros (cuentas de ahorro, tarjetas de crédito, inversiones), THE Agente_Conversacional SHALL consultar la Knowledge_Base en Amazon Bedrock
 2. THE Knowledge_Base SHALL contener documentación oficial de productos del Banco Bolivariano en formato vectorizado
-3. THE Agente_Conversacional SHALL citar la fuente de información con badge visual de tipo informativo
+3. THE Agente_Conversacional SHALL citar la fuente de información con badge visual de tipo informativo únicamente cuando la información recuperada es suficiente para responder la consulta del Cliente
 4. THE Agente_Conversacional SHALL responder en español ecuatoriano con terminología local (ej: "cuenta de ahorros" no "savings account")
-5. IF la Knowledge_Base no contiene información suficiente, THEN THE Agente_Conversacional SHALL indicar claramente que no tiene esa información y sugerir contactar a un asesor
+5. IF la Knowledge_Base no contiene información suficiente, THEN THE Agente_Conversacional SHALL indicar claramente que no tiene esa información disponible
 6. THE Agente_Conversacional SHALL incluir enlaces a documentación completa cuando esté disponible en S3_Bucket
 
 ### Requirement 6: Guardrails de Seguridad y Cumplimiento
@@ -145,7 +145,7 @@ Transformar datos transaccionales pasivos en inteligencia financiera proactiva m
 3. THE Guardrails SHALL detectar y bloquear intentos de prompt injection o jailbreak
 4. THE Agente_Conversacional SHALL mostrar un badge "Protegido por Guardrails" de tipo advertencia cuando rechace una consulta
 5. THE Guardrails SHALL validar que las respuestas del agente no contengan información personal identificable (PII) de otros clientes
-6. THE Agente_Conversacional SHALL registrar todos los rechazos de Guardrails en DynamoDB_Table para auditoría
+6. THE Agente_Conversacional SHALL registrar todos los rechazos de Guardrails en DynamoDB_Table para auditoría; IF el registro de auditoría falla, THEN THE sistema SHALL continuar procesando la solicitud del Cliente sin bloquear la operación
 
 ### Requirement 7: Experiencia Conversacional con Streaming
 
@@ -156,7 +156,7 @@ Transformar datos transaccionales pasivos en inteligencia financiera proactiva m
 #### Acceptance Criteria
 
 1. THE Agente_Conversacional SHALL transmitir respuestas mediante streaming para mostrar progreso en tiempo real
-2. THE Agente_Conversacional SHALL completar el 95% de las respuestas en menos de 3 segundos desde el envío del mensaje
+2. THE Agente_Conversacional SHALL completar el 95% de las respuestas en estrictamente menos de 3 segundos desde el envío del mensaje; IF una respuesta excede los 3 segundos, THEN THE sistema SHALL aplicar timeout y mostrar un mensaje de error o respuesta de fallback al Cliente
 3. THE Agente_Conversacional SHALL mantener contexto de la conversación durante toda la sesión del Cliente
 4. THE Agente_Conversacional SHALL usar lenguaje natural en español ecuatoriano con tono amigable y profesional
 5. THE Agente_Conversacional SHALL aplicar estilos visuales consistentes con la identidad del Banco Bolivariano
