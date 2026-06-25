@@ -1,0 +1,91 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "ISF Calculator API",
+    "version": "1.0.0",
+    "description": "Calcula el Índice de Salud Financiera (ISF) del cliente basado en ingresos, gastos, ahorros y deudas"
+  },
+  "paths": {
+    "/calculate-isf": {
+      "post": {
+        "operationId": "calculateISF",
+        "summary": "Calcula el ISF del cliente",
+        "description": "Calcula el Índice de Salud Financiera del cliente para el período especificado. El ISF es un score de 0-100 basado en 4 componentes: ratio ingresos/gastos (30%), nivel de ahorro (25%), carga de deuda (25%), y estabilidad de ingresos (20%).",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": true,
+            "description": "Identificador único del cliente",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "calculation_period_days",
+            "in": "query",
+            "required": false,
+            "description": "Período de cálculo en días (default: 30)",
+            "schema": {
+              "type": "integer",
+              "default": 30,
+              "minimum": 7,
+              "maximum": 90
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "ISF calculado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "isf_score": {
+                      "type": "number",
+                      "description": "Score de 0 a 100 con precisión de dos decimales",
+                      "minimum": 0,
+                      "maximum": 100
+                    },
+                    "interpretation": {
+                      "type": "string",
+                      "description": "Interpretación textual del score",
+                      "enum": ["Excelente", "Bueno", "Regular", "Crítico"]
+                    },
+                    "components": {
+                      "type": "object",
+                      "description": "Desglose de los 4 componentes del ISF",
+                      "properties": {
+                        "income_expense_ratio": {
+                          "type": "number",
+                          "description": "Score del ratio ingresos/gastos (peso: 30%)"
+                        },
+                        "savings_level": {
+                          "type": "number",
+                          "description": "Score del nivel de ahorro (peso: 25%)"
+                        },
+                        "debt_load": {
+                          "type": "number",
+                          "description": "Score de carga de deuda (peso: 25%)"
+                        },
+                        "income_stability": {
+                          "type": "number",
+                          "description": "Score de estabilidad de ingresos (peso: 20%)"
+                        }
+                      }
+                    },
+                    "period_days": {
+                      "type": "integer",
+                      "description": "Período de cálculo utilizado"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

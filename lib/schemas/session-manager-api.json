@@ -1,0 +1,170 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Session Manager API",
+    "version": "1.0.0",
+    "description": "Gestiona contexto de conversación y persistencia de sesiones del asistente financiero"
+  },
+  "paths": {
+    "/save-conversation": {
+      "post": {
+        "operationId": "saveConversation",
+        "summary": "Guarda un turno de conversación",
+        "description": "Persiste un turno de conversación en DynamoDB con metadata de action groups invocados y estado de guardrails.",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": ["session_id", "client_id", "message", "response"],
+                "properties": {
+                  "session_id": {
+                    "type": "string",
+                    "description": "Identificador único de la sesión"
+                  },
+                  "client_id": {
+                    "type": "string",
+                    "description": "Identificador del cliente"
+                  },
+                  "message": {
+                    "type": "string",
+                    "description": "Mensaje del usuario"
+                  },
+                  "response": {
+                    "type": "string",
+                    "description": "Respuesta del agente"
+                  },
+                  "action_groups_invoked": {
+                    "type": "array",
+                    "description": "Action Groups invocados en este turno",
+                    "items": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Conversación guardada exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "description": "Timestamp de guardado (ISO 8601)"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/retrieve-context": {
+      "post": {
+        "operationId": "retrieveContext",
+        "summary": "Recupera contexto de conversación",
+        "description": "Recupera las últimas 5 conversaciones del cliente para mantener contexto conversacional.",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": true,
+            "description": "Identificador de la sesión",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contexto recuperado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "conversation_history": {
+                      "type": "array",
+                      "description": "Últimas 5 conversaciones",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "timestamp": {
+                            "type": "string",
+                            "description": "Timestamp del mensaje"
+                          },
+                          "message": {
+                            "type": "string",
+                            "description": "Mensaje del usuario"
+                          },
+                          "response": {
+                            "type": "string",
+                            "description": "Respuesta del agente"
+                          }
+                        }
+                      }
+                    },
+                    "total_turns": {
+                      "type": "integer",
+                      "description": "Total de turnos en la sesión"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/reset-context": {
+      "post": {
+        "operationId": "resetContext",
+        "summary": "Reinicia el contexto de conversación",
+        "description": "Limpia el contexto de conversación del cliente para iniciar una sesión nueva.",
+        "parameters": [
+          {
+            "name": "session_id",
+            "in": "query",
+            "required": true,
+            "description": "Identificador de la sesión a resetear",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Contexto reiniciado exitosamente",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Mensaje de confirmación"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

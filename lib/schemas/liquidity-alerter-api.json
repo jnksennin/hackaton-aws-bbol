@@ -1,0 +1,141 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Liquidity Alerter API",
+    "version": "1.0.0",
+    "description": "Proyecta saldo futuro y genera alertas de liquidez para prevenir sobregiros"
+  },
+  "paths": {
+    "/project-liquidity": {
+      "post": {
+        "operationId": "projectLiquidity",
+        "summary": "Proyecta liquidez a futuro",
+        "description": "Proyecta el saldo a N días basado en gastos promedio diarios de los últimos 30 días. Evalúa riesgo de sobregiro y genera recomendaciones.",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": true,
+            "description": "Identificador único del cliente",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "projection_days",
+            "in": "query",
+            "required": false,
+            "description": "Días de proyección (default: 7)",
+            "schema": {
+              "type": "integer",
+              "default": 7,
+              "minimum": 1,
+              "maximum": 30
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Proyección de liquidez calculada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "current_balance": {
+                      "type": "number",
+                      "description": "Saldo actual del cliente en USD"
+                    },
+                    "projected_balance": {
+                      "type": "number",
+                      "description": "Saldo proyectado en N días"
+                    },
+                    "alert_level": {
+                      "type": "string",
+                      "description": "Nivel de alerta de liquidez",
+                      "enum": ["none", "warning", "critical"]
+                    },
+                    "deficit_date": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Fecha estimada de déficit (ISO 8601), null si no hay déficit proyectado"
+                    },
+                    "recommendations": {
+                      "type": "array",
+                      "description": "Recomendaciones específicas para el cliente",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "avg_daily_spend": {
+                      "type": "number",
+                      "description": "Gasto promedio diario calculado"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/evaluate-purchase": {
+      "post": {
+        "operationId": "evaluatePurchase",
+        "summary": "Evalúa impacto de una compra en la liquidez",
+        "description": "Evalúa si un gasto específico compromete la liquidez del cliente considerando gastos fijos pendientes y proyección de saldo.",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": true,
+            "description": "Identificador único del cliente",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "purchase_amount",
+            "in": "query",
+            "required": true,
+            "description": "Monto de la compra a evaluar en USD",
+            "schema": {
+              "type": "number",
+              "minimum": 0
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Evaluación de compra completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "can_afford": {
+                      "type": "boolean",
+                      "description": "True si el cliente puede permitirse la compra sin comprometer liquidez"
+                    },
+                    "impact_on_liquidity": {
+                      "type": "string",
+                      "description": "Descripción del impacto en la liquidez: bajo, moderado, alto, crítico"
+                    },
+                    "remaining_balance_after": {
+                      "type": "number",
+                      "description": "Saldo restante después de la compra"
+                    },
+                    "recommendation": {
+                      "type": "string",
+                      "description": "Recomendación personalizada para el cliente"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

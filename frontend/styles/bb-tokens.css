@@ -1,0 +1,197 @@
+/* ==========================================================================
+   Banco Bolivariano Design System — CSS Tokens
+   Asistente de Salud Financiera Agéntico
+   ========================================================================== */
+
+/* Google Fonts — Lexend (300, 400, 500, 600, 700) */
+@import url('https://fonts.googleapis.com/css2?family=Lexend:wght@300;400;500;600;700&display=swap');
+
+/* ==========================================================================
+   Design Tokens (Custom Properties)
+   ========================================================================== */
+:root {
+  /* -------------------------------------------------------------------------
+     Color — Primary
+     ------------------------------------------------------------------------- */
+  --bb-primary-100: #b3e0e6;
+  --bb-primary-200: #66c2cc;
+  --bb-primary-300: #33adb9;
+  --bb-primary-400: #0098a6;
+  --bb-primary-500: #008292;
+  --bb-primary-600: #006b78;
+  --bb-primary-700: #00545e;
+
+  /* -------------------------------------------------------------------------
+     Color — Background
+     ------------------------------------------------------------------------- */
+  --bb-bg-body: #edeef3;
+  --bb-bg-primary: #008292;
+  --bb-bg-surface: #ffffff;
+  --bb-bg-surface-alt: #f5f6fa;
+
+  /* -------------------------------------------------------------------------
+     Color — Text
+     ------------------------------------------------------------------------- */
+  --bb-text-primary: #1a1a2e;
+  --bb-text-secondary: #4a4a6a;
+  --bb-text-muted: #7a7a9a;
+  --bb-text-inverse: #ffffff;
+
+  /* -------------------------------------------------------------------------
+     Color — State: Warning
+     ------------------------------------------------------------------------- */
+  --bb-state-warning-bg: #fff8e1;
+  --bb-state-warning-border: #f59e0b;
+  --bb-state-warning-text: #92400e;
+
+  /* -------------------------------------------------------------------------
+     Color — State: Info
+     ------------------------------------------------------------------------- */
+  --bb-state-info-bg: #e0f2fe;
+  --bb-state-info-border: #0284c7;
+  --bb-state-info-text: #075985;
+
+  /* -------------------------------------------------------------------------
+     Color — State: Success
+     ------------------------------------------------------------------------- */
+  --bb-state-success-bg: #ecfdf5;
+  --bb-state-success-border: #10b981;
+  --bb-state-success-text: #065f46;
+
+  /* -------------------------------------------------------------------------
+     Color — State: Error
+     ------------------------------------------------------------------------- */
+  --bb-state-error-bg: #fef2f2;
+  --bb-state-error-border: #ef4444;
+  --bb-state-error-text: #991b1b;
+
+  /* -------------------------------------------------------------------------
+     Color — Indicators (ISF Score)
+     ------------------------------------------------------------------------- */
+  --bb-green-500: #22c55e;
+  --bb-green-600: #16a34a;
+  --bb-yellow-500: #eab308;
+  --bb-red-500: #ef4444;
+  --bb-red-600: #dc2626;
+
+  /* -------------------------------------------------------------------------
+     Shadow
+     ------------------------------------------------------------------------- */
+  --bb-shadow-card: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --bb-shadow-elevated: 0 4px 16px rgba(0, 0, 0, 0.12);
+  --bb-shadow-focus: 0 0 0 3px rgba(0, 130, 146, 0.3);
+
+  /* -------------------------------------------------------------------------
+     Typography
+     ------------------------------------------------------------------------- */
+  --bb-font-family: 'Lexend', sans-serif;
+  --bb-font-size-xs: 0.75rem;    /* 12px */
+  --bb-font-size-sm: 0.875rem;   /* 14px */
+  --bb-font-size-md: 1rem;       /* 16px */
+  --bb-font-size-lg: 1.125rem;   /* 18px */
+  --bb-font-size-xl: 1.25rem;    /* 20px */
+  --bb-font-size-2xl: 1.5rem;    /* 24px */
+  --bb-font-size-3xl: 2rem;      /* 32px */
+  --bb-font-weight-light: 300;
+  --bb-font-weight-regular: 400;
+  --bb-font-weight-medium: 500;
+  --bb-font-weight-semibold: 600;
+  --bb-font-weight-bold: 700;
+
+  /* -------------------------------------------------------------------------
+     Spacing
+     ------------------------------------------------------------------------- */
+  --bb-space-xs: 0.25rem;   /* 4px */
+  --bb-space-sm: 0.5rem;    /* 8px */
+  --bb-space-md: 1rem;      /* 16px */
+  --bb-space-lg: 1.5rem;    /* 24px */
+  --bb-space-xl: 2rem;      /* 32px */
+  --bb-space-2xl: 3rem;     /* 48px */
+
+  /* -------------------------------------------------------------------------
+     Border Radius
+     ------------------------------------------------------------------------- */
+  --bb-radius-sm: 0.25rem;  /* 4px */
+  --bb-radius-md: 0.5rem;   /* 8px */
+  --bb-radius-lg: 1rem;     /* 16px */
+  --bb-radius-full: 9999px;
+
+  /* -------------------------------------------------------------------------
+     Transitions
+     ------------------------------------------------------------------------- */
+  --bb-transition-fast: 150ms ease;
+  --bb-transition-normal: 250ms ease;
+  --bb-transition-slow: 400ms ease;
+}
+
+/* ==========================================================================
+   CSS Reset & Base Styles
+   ========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--bb-font-family);
+  font-size: var(--bb-font-size-md);
+  font-weight: var(--bb-font-weight-regular);
+  line-height: 1.6;
+  color: var(--bb-text-primary);
+  background-color: var(--bb-bg-body);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--bb-font-family);
+  font-weight: var(--bb-font-weight-semibold);
+  line-height: 1.3;
+}
+
+h1 { font-size: var(--bb-font-size-3xl); }
+h2 { font-size: var(--bb-font-size-2xl); }
+h3 { font-size: var(--bb-font-size-xl); }
+h4 { font-size: var(--bb-font-size-lg); }
+
+a {
+  color: var(--bb-primary-500);
+  text-decoration: none;
+  transition: color var(--bb-transition-fast);
+}
+
+a:hover {
+  color: var(--bb-primary-600);
+}
+
+button {
+  font-family: var(--bb-font-family);
+  cursor: pointer;
+  border: none;
+  background: none;
+}
+
+input, textarea, select {
+  font-family: var(--bb-font-family);
+  font-size: var(--bb-font-size-md);
+}
+
+img, svg {
+  display: block;
+  max-width: 100%;
+}
+
+ul, ol {
+  list-style: none;
+}

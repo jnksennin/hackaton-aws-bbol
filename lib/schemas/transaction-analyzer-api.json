@@ -1,0 +1,156 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "Transaction Analyzer API",
+    "version": "1.0.0",
+    "description": "Analiza transacciones para identificar gastos hormiga y suscripciones recurrentes"
+  },
+  "paths": {
+    "/analyze-gastos-hormiga": {
+      "post": {
+        "operationId": "analyzeGastosHormiga",
+        "summary": "Identifica gastos hormiga del cliente",
+        "description": "Identifica gastos pequeños frecuentes (<$10 USD) agrupados por categoría. Calcula el total acumulado y su porcentaje respecto al ingreso mensual.",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": true,
+            "description": "Identificador único del cliente",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "period_months",
+            "in": "query",
+            "required": false,
+            "description": "Período de análisis en meses (default: 1)",
+            "schema": {
+              "type": "integer",
+              "default": 1,
+              "minimum": 1,
+              "maximum": 6
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Análisis de gastos hormiga completado",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "categories": {
+                      "type": "array",
+                      "description": "Top 3 categorías de gastos hormiga ordenadas por monto total",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "description": "Nombre de la categoría (ej: cafeterías, snacks, transporte)"
+                          },
+                          "total": {
+                            "type": "number",
+                            "description": "Monto total gastado en esta categoría"
+                          },
+                          "frequency": {
+                            "type": "integer",
+                            "description": "Número de transacciones en esta categoría"
+                          }
+                        }
+                      }
+                    },
+                    "total_amount": {
+                      "type": "number",
+                      "description": "Total acumulado de todos los gastos hormiga"
+                    },
+                    "percentage_of_income": {
+                      "type": "number",
+                      "description": "Porcentaje que representan los gastos hormiga del ingreso mensual"
+                    },
+                    "alert_triggered": {
+                      "type": "boolean",
+                      "description": "True si los gastos hormiga superan el 15% del ingreso mensual"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/detect-subscriptions": {
+      "post": {
+        "operationId": "detectSubscriptions",
+        "summary": "Detecta suscripciones recurrentes",
+        "description": "Detecta suscripciones recurrentes analizando patrones de cobro mensual en los últimos 3 meses. Identifica mismo merchant con monto similar (±$2 USD).",
+        "parameters": [
+          {
+            "name": "client_id",
+            "in": "query",
+            "required": true,
+            "description": "Identificador único del cliente",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Detección de suscripciones completada",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "subscriptions": {
+                      "type": "array",
+                      "description": "Lista de suscripciones detectadas",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "merchant": {
+                            "type": "string",
+                            "description": "Nombre del comercio"
+                          },
+                          "monthly_amount": {
+                            "type": "number",
+                            "description": "Monto mensual promedio"
+                          },
+                          "category": {
+                            "type": "string",
+                            "description": "Categoría: streaming, software, gimnasio, servicios digitales"
+                          },
+                          "last_charge_date": {
+                            "type": "string",
+                            "description": "Fecha del último cobro (ISO 8601)"
+                          },
+                          "annual_projection": {
+                            "type": "number",
+                            "description": "Proyección de costo anual"
+                          }
+                        }
+                      }
+                    },
+                    "monthly_total": {
+                      "type": "number",
+                      "description": "Total mensual de todas las suscripciones"
+                    },
+                    "annual_total": {
+                      "type": "number",
+                      "description": "Total anual proyectado de todas las suscripciones"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

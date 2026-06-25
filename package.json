@@ -1,0 +1,30 @@
+{
+  "name": "hackaton-aws-bbol",
+  "version": "1.0.0",
+  "description": "Asistente de Salud Financiera Agéntico - Banco Bolivariano Hackathon",
+  "scripts": {
+    "build": "tsc",
+    "watch": "tsc -w",
+    "test": "jest",
+    "cdk": "cdk",
+    "synth": "cdk synth",
+    "deploy": "cdk deploy --all",
+    "destroy": "cdk destroy --all"
+  },
+  "devDependencies": {
+    "@aws-sdk/client-dynamodb": "^3.1075.0",
+    "@aws-sdk/lib-dynamodb": "^3.1075.0",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^22.0.0",
+    "aws-cdk": "^2.170.0",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.2.5",
+    "ts-node": "^10.9.2",
+    "typescript": "~5.6.3"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "^2.170.0",
+    "constructs": "^10.4.2",
+    "source-map-support": "^0.5.21"
+  }
+}
