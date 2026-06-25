@@ -183,3 +183,180 @@ graph TD
     - Test precisión de dos decimales
     - _Requirements: 1.3_
     - _Estimación: 1h_
+
+- [ ] 8. Implementar Lambda L2: Transaction Analyzer
+  - [ ] 8.1 Implementar análisis de gastos hormiga
+    - Filtrar transacciones <$10 USD del último mes
+    - Agrupar por categoría y calcular total por categoría
+    - Ordenar por monto total y retornar top 3
+    - Calcular porcentaje respecto a ingreso mensual
+    - Generar alerta si ≥15% del ingreso (independiente del monto absoluto)
+    - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
+    - _Estimación: 1.5h_
+  - [ ] 8.2 Implementar detección de suscripciones
+    - Analizar transacciones de últimos 3 meses
+    - Detectar patrones: mismo merchant, monto ±$2, frecuencia mensual
+    - Clasificar por categoría: streaming, software, gimnasio, servicios digitales
+    - Calcular total mensual y proyección anual
+    - _Requirements: 3.1, 3.2, 3.3, 3.4, 3.5_
+    - _Estimación: 1.5h_
+  - [ ]* 8.3 Write unit tests for Transaction Analyzer
+    - Test filtrado correcto de gastos <$10
+    - Test agrupamiento por categoría
+    - Test detección de patrones recurrentes con tolerancia ±$2
+    - Test alerta ≥15% independiente del nivel de ingresos
+    - _Requirements: 2.2, 2.5, 3.2_
+    - _Estimación: 1h_
+
+- [ ] 9. Implementar Lambda L3: Liquidity Alerter
+  - [ ] 9.1 Implementar proyección de liquidez
+    - Calcular gastos promedio diarios (últimos 30 días)
+    - Proyectar saldo a N días: current_balance - (avg_daily_spend * N)
+    - Generar alerta si current_balance < 1.2 * monthly_fixed_expenses
+    - Determinar alert_level: none, warning, critical
+    - _Requirements: 4.1, 4.2_
+    - _Estimación: 1.5h_
+  - [ ] 9.2 Implementar evaluación de compras
+    - Evaluar si purchase_amount compromete liquidez
+    - Generar recomendación específica: reducir gastos variables, diferir compras, transferir desde ahorros
+    - _Requirements: 4.3, 4.6_
+    - _Estimación: 1h_
+  - [ ]* 9.3 Write unit tests for Liquidity Alerter
+    - Test proyección de saldo con diferentes escenarios
+    - Test generación de alertas por threshold
+    - Test recomendaciones específicas para saldo negativo
+    - _Requirements: 4.2, 4.3_
+    - _Estimación: 1h_
+
+- [ ] 10. Implementar Lambda L4: Session Manager
+  - Implementar operaciones CRUD para conversaciones
+  - Operación save: guardar turno de conversación en DynamoDB (non-blocking audit logging: si falla la escritura, continuar sin bloquear)
+  - Operación retrieve: recuperar últimas 5 conversaciones del cliente
+  - Operación reset: limpiar contexto de conversación
+  - _Requirements: 8.1, 8.2, 6.6_
+  - _Estimación: 1.5h_
+
+- [ ] 11. Conectar Lambda Functions al Bedrock Agent
+  - Crear permisos IAM para que Agent invoque las 4 Lambdas
+  - Asociar cada Lambda a su Action Group correspondiente
+  - Configurar OpenAPI schemas con parámetros correctos
+  - _Requirements: 1.1_
+  - _Estimación: 1h_
+
+- [ ] 12. Checkpoint - Verificar Action Groups funcionales
+  - Probar cálculo de ISF con cliente demo
+  - Probar detección de gastos hormiga y suscripciones
+  - Probar proyección de liquidez
+  - Verificar que Session Manager persiste conversaciones
+  - Ensure all tests pass, ask the user if questions arise.
+  - _Estimación: 1h_
+
+---
+
+### ÉPICA E3: Frontend Demo (Chat UI con Design System BB)
+
+- [ ] 13. Generar archivo bb-tokens.css con Design System Bolivariano
+  - Crear archivo `styles/bb-tokens.css` con todos los tokens CSS
+  - Tokens de color: `--bb-primary-500: #008292`, `--bb-bg-body: #edeef3`, `--bb-bg-primary: #008292`, `--bb-bg-surface: #ffffff`
+  - Tokens de estado: `--bb-state-warning-bg`, `--bb-state-warning-border`, `--bb-state-info-bg`, `--bb-state-info-border`
+  - Tokens de indicadores: `--bb-green-500`, `--bb-red-600`
+  - Tokens de sombra: `--bb-shadow-card: 0 2px 8px rgba(0,0,0,0.1)`
+  - Configurar Google Fonts para Lexend (weights: 300, 400, 500, 600, 700)
+  - Importar bb-tokens.css globalmente en `_app.tsx` o `layout.tsx`
+  - _Requirements: 7.5_
+  - _Estimación: 1h_
+
+- [ ] 14. Configurar Next.js project con TypeScript
+  - Inicializar proyecto Next.js 14+ con App Router
+  - Configurar TypeScript con strict mode
+  - Instalar dependencias: `aws-sdk`, `@aws-sdk/client-bedrock-agent-runtime`
+  - Configurar variables de entorno para AWS credentials
+  - _Requirements: 7.5_
+  - _Estimación: 0.5h_
+
+- [ ] 15. Crear componente BBChatHeader
+  - Header con logo/nombre del agente
+  - Fondo: `var(--bb-bg-primary)` (#008292)
+  - Tipografía: Lexend, color blanco
+  - Incluir badge "Protegido por Guardrails" con icono 🛡️
+  - _Requirements: 7.5_
+  - _Estimación: 0.5h_
+
+- [ ] 16. Crear componentes de burbujas de chat
+  - [ ] 16.1 Crear BBUserBubble
+    - Burbuja alineada a la derecha
+    - Fondo: `var(--bb-primary-500)` (#008292)
+    - Texto en blanco, tipografía Lexend
+    - Border radius consistente con DS
+    - _Requirements: 7.5_
+    - _Estimación: 0.5h_
+  - [ ] 16.2 Crear BBAgentBubble
+    - Burbuja alineada a la izquierda
+    - Fondo: `var(--bb-bg-surface)` (#ffffff)
+    - Texto en color oscuro, tipografía Lexend
+    - Sombra: `var(--bb-shadow-card)`
+    - _Requirements: 7.5_
+    - _Estimación: 0.5h_
+
+- [ ] 17. Crear componente BBFinancialCard (ISF)
+  - [ ] 17.1 Implementar estructura de tarjeta
+    - Tarjeta con fondo `var(--bb-bg-body)` (#edeef3)
+    - Sombra: `var(--bb-shadow-card)`
+    - Tipografía: Lexend
+    - _Requirements: 1.5, 7.5_
+    - _Estimación: 0.5h_
+  - [ ] 17.2 Implementar visualización de ISF score
+    - Score numérico grande y destacado
+    - Color dinámico: `var(--bb-green-500)` si score ≥60, `var(--bb-red-600)` si <60
+    - Interpretación textual: Excelente/Bueno/Regular/Crítico
+    - _Requirements: 1.4, 1.5_
+    - _Estimación: 0.5h_
+  - [ ] 17.3 Implementar breakdown de componentes ISF
+    - 4 barras de progreso para: ratio ingresos/gastos, nivel de ahorro, carga de deuda, estabilidad de ingresos
+    - Cada barra con porcentaje y label
+    - Colores consistentes con DS
+    - _Requirements: 1.2_
+    - _Estimación: 1h_
+
+- [ ] 18. Crear componente BBHealthScoreGauge
+  - Gauge circular o semicircular para ISF
+  - Gradiente de color: verde (80-100) → amarillo (40-79) → rojo (0-39)
+  - Animación de transición suave
+  - Tipografía: Lexend para el número central
+  - _Requirements: 1.5, 7.5_
+  - _Estimación: 1.5h_
+
+- [ ] 19. Crear componente BBGastosHormigaList
+  - Lista de top 3 categorías de gastos hormiga
+  - Cada item con: nombre categoría, monto total, frecuencia
+  - Monto destacado en `var(--bb-primary-500)`
+  - Si alerta activa (≥15% ingreso): badge warning con `var(--bb-state-warning-bg)` y `var(--bb-state-warning-border)`
+  - _Requirements: 2.4, 2.5, 2.6_
+  - _Estimación: 1h_
+
+- [ ] 20. Crear componente BBSubscriptionCard
+  - Tarjeta individual para cada suscripción
+  - Mostrar: merchant, monto mensual, categoría, última fecha de cobro, proyección anual
+  - Fondo: `var(--bb-bg-body)`
+  - Monto mensual destacado en `var(--bb-primary-500)`
+  - Tipografía: Lexend
+  - _Requirements: 3.4, 3.6_
+  - _Estimación: 1h_
+
+- [ ] 21. Crear componente BBGuardrailBadge
+  - Badge visible cuando Guardrails bloquea consulta
+  - Fondo: `var(--bb-state-warning-bg)`
+  - Border: `var(--bb-state-warning-border)`
+  - Icono: 🛡️
+  - Texto: "Protegido por Guardrails de Seguridad"
+  - _Requirements: 6.4, 7.5_
+  - _Estimación: 0.5h_
+
+- [ ] 22. Crear componente BBKnowledgeBadge
+  - Badge para citar fuentes de Knowledge Base
+  - Solo mostrar cuando la información recuperada es suficiente para responder la consulta
+  - Fondo: `var(--bb-state-info-bg)`
+  - Border: `var(--bb-state-info-border)`
+  - Incluir título del documento y enlace (si disponible)
+  - _Requirements: 5.3, 5.6_
+  - _Estimación: 0.5h_
