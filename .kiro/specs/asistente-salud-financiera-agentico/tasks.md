@@ -1,5 +1,9 @@
 # Implementation Plan: Asistente de Salud Financiera Agéntico
 
+## Overview
+
+Este plan de implementación está diseñado para un **hackathon de 24-48 horas**. El enfoque prioriza funcionalidades demostrables con alto impacto visual usando el Design System de Banco Bolivariano. La arquitectura usa Amazon Bedrock Agents como orquestador central, 4 Lambda Functions (Python 3.12) para Action Groups, DynamoDB para datos transaccionales, S3 para Knowledge Base, y frontend React/Next.js.
+
 ## Task Dependency Graph
 
 ```mermaid
@@ -96,6 +100,58 @@ graph TD
     T40 --> T41
     T41 --> T42
     T42 --> T43
+```
+
+```json
+{
+  "waves": [
+    {
+      "wave": 1,
+      "description": "Infrastructure setup - no dependencies",
+      "tasks": [1, 2, 3, 5, 13, 14, 36]
+    },
+    {
+      "wave": 2,
+      "description": "Data generation and base components",
+      "tasks": [4, 6, 15, 16, 30]
+    },
+    {
+      "wave": 3,
+      "description": "Lambda functions and financial components",
+      "tasks": [7, 8, 9, 10, 17, 18, 19, 20, 21, 22, 23, 24, 31, 34]
+    },
+    {
+      "wave": 4,
+      "description": "Integration and streaming",
+      "tasks": [11, 25, 32, 35, 37]
+    },
+    {
+      "wave": 5,
+      "description": "End-to-end integration and QA",
+      "tasks": [12, 26, 33]
+    },
+    {
+      "wave": 6,
+      "description": "QA, responsiveness, and demo prep",
+      "tasks": [27, 38]
+    },
+    {
+      "wave": 7,
+      "description": "Final verification and demo",
+      "tasks": [28, 39]
+    },
+    {
+      "wave": 8,
+      "description": "Presentation prep",
+      "tasks": [29, 40]
+    },
+    {
+      "wave": 9,
+      "description": "Slide deck and rehearsal",
+      "tasks": [41, 42, 43]
+    }
+  ]
+}
 ```
 
 ## Tasks
@@ -601,3 +657,56 @@ graph TD
     - Slide 12: Impacto esperado (+15% ahorro, -20% mora)
     - _Requirements: NFR Demostrabilidad_
     - _Estimación: 0.5h_
+
+- [ ] 42. Preparar script de presentación (5 minutos)
+  - Introducción: 30 segundos (problema + solución)
+  - Arquitectura: 1 minuto (stack técnico + decisiones clave)
+  - Demo live: 2.5 minutos (3 flujos)
+  - Métricas: 30 segundos (evaluación + performance)
+  - Roadmap: 30 segundos (próximos pasos)
+  - _Requirements: NFR Demostrabilidad_
+  - _Estimación: 0.5h_
+
+- [ ] 43. Ensayar presentación con todo el equipo
+  - Practicar transiciones entre slides y demo
+  - Verificar timing (5 minutos máximo)
+  - Preparar respuestas a preguntas frecuentes del jurado
+  - _Requirements: NFR Demostrabilidad_
+  - _Estimación: 0.5h_
+
+## Notes
+
+### Priorización MoSCoW para Hackathon
+
+| Prioridad | Épicas | Descripción |
+|-----------|--------|-------------|
+| **Must Have** | E1, E2, E3, E4, E8, E9 | Funcionalidades core para demo funcional |
+| **Should Have** | E5, E6, E7 | Mejoran credibilidad técnica pero no bloquean demo |
+| **Nice to Have** | — | Fine-tuning, A/B testing, integración core bancario (fuera de alcance) |
+
+### Clarificaciones de Requisitos Incorporadas
+
+- **REQ-1.6 / REQ-7.2:** Latencia estrictamente < 3s (no exactamente 3). Timeout con fallback.
+- **REQ-2.5:** Alerta gastos hormiga se dispara con ≥15% del ingreso, independiente del monto absoluto.
+- **REQ-5.3:** Badge de citación solo se muestra cuando la info del KB es suficiente.
+- **REQ-5.5:** Indicar que no hay info disponible, sin obligar a sugerir contacto con asesor.
+- **REQ-6.6:** Si el audit logging falla, continuar sin bloquear la operación del cliente.
+
+### Definition of Done — Hackathon
+
+Cada tarea se considera completa cuando cumple TODOS estos criterios:
+
+- ✅ Funciona en entorno demo sin intervención manual
+- ✅ Tiene al menos un test automatizado o script de evaluación que pasa
+- ✅ Está documentada en README con instrucciones de despliegue
+- ✅ Ha sido revisada por al menos un miembro del equipo diferente al autor
+- ✅ El frontend usa exclusivamente tokens `var(--bb-...)` — cero valores hardcodeados
+- ✅ Los componentes muestran Lexend como tipografía — verificado en DevTools → Fonts
+- ✅ Está incluida en el deck de presentación al jurado
+
+### Checkpoints Go/No-Go
+
+- **Hora 4 (24h) / Hora 8 (48h):** Agent responde + Guardrails funcionan
+- **Hora 8 (24h) / Hora 16 (48h):** ISF Calculator funciona + Chat UI renderiza
+- **Hora 12-16 (24h) / Hora 24-32 (48h):** Fidelidad DS 100% (CRÍTICO)
+- **Hora 20 (24h) / Hora 40 (48h):** 3 flujos demo funcionan + video backup
