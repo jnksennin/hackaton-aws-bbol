@@ -631,11 +631,11 @@ interface GastosHormigaListProps {
   }>;
   totalAmount: number;
   percentageOfIncome: number;
-  alertTriggered: boolean;
+  alertTriggered: boolean;  // True when percentageOfIncome >= 15%, regardless of absolute amounts
 }
 
 // CSS Tokens utilizados:
-// - --bb-state-warning-bg y --bb-state-warning-border si alertTriggered
+// - --bb-state-warning-bg y --bb-state-warning-border si alertTriggered (≥15% del ingreso)
 // - --bb-primary-500 para montos
 // - Tipografía: Lexend
 ```
@@ -2429,10 +2429,28 @@ class BedrockCircuitBreaker {
 
 ```typescript
 async function handleAgentRequest(request: InvokeAgentRequest): Promise<InvokeAgentResponse> {
+  // Apply strict 3s timeout (REQ-7.2)
+  const STRICT_TIMEOUT_MS = 3000;
+  
   try {
-    // Try full functionality
-    return await bedrockAgent.invoke(request);
+    // Try full functionality with strict timeout
+    const response = await Promise.race([
+      bedrockAgent.invoke(request),
+      new Promise<never>((_, reject) => 
+        setTimeout(() => reject(new Error('RESPONSE_TIMEOUT')), STRICT_TIMEOUT_MS)
+      )
+    ]);
+    return response;
   } catch (error) {
+    if (error.message === 'RESPONSE_TIMEOUT') {
+      // Strict timeout exceeded — show fallback (REQ-7.2)
+      return {
+        response: 'La respuesta excedió el tiempo límite. Por favor intenta nuevamente o reformula tu consulta.',
+        error: true,
+        timeout: true
+      };
+    }
+    
     if (error.code === 'BEDROCK_UNAVAILABLE') {
       // Degrade to cached responses
       const cachedISF = await cache.get(`isf:${request.client_id}`);
@@ -2450,6 +2468,39 @@ async function handleAgentRequest(request: InvokeAgentRequest): Promise<InvokeAg
       response: 'Lo siento, estoy experimentando dificultades técnicas. Por favor contacta a nuestro centro de atención: 1800-BOLIVAR.',
       error: true
     };
+  }
+}
+```
+
+#### Non-Blocking Audit Logging (REQ-6.6)
+
+```typescript
+async function logGuardrailRejection(event: GuardrailEvent): Promise<void> {
+  // Audit logging must not block the client operation (REQ-6.6)
+  try {
+    await dynamodb.putItem({
+      TableName: 'financial-assistant-sessions',
+      Item: {
+        session_id: event.session_id,
+        timestamp: Date.now(),
+        client_id: event.client_id,
+        guardrail_triggered: true,
+        guardrail_reason: event.reason,
+        event_type: 'guardrail_block'
+      }
+    });
+  } catch (auditError) {
+    // Log failure to CloudWatch but DO NOT block the operation
+    console.error('Audit log write failed (non-blocking):', auditError);
+    cloudwatch.putMetricData({
+      Namespace: 'FinancialAssistant',
+      MetricData: [{
+        MetricName: 'AuditLogFailure',
+        Value: 1,
+        Unit: 'Count'
+      }]
+    });
+    // Continue processing — never throw here
   }
 }
 ```
@@ -2730,6 +2781,41 @@ describe('Error Handling', () => {
     await expect(circuitBreaker.invoke({ /* ... */ }))
       .rejects.toThrow('Circuit breaker is OPEN');
   });
+  
+  test('response exceeding 3s strict timeout shows fallback (REQ-7.2)', async () => {
+    // Mock Bedrock to respond after 4 seconds
+    jest.spyOn(bedrock, 'invokeAgent').mockImplementation(
+      () => new Promise(resolve => setTimeout(resolve, 4000))
+    );
+    
+    const response = await handleAgentRequest({
+      message: '¿Cuál es mi ISF?',
+      client_id: 'client-001'
+    });
+    
+    // Must apply timeout and show fallback — never hang
+    expect(response.timeout).toBe(true);
+    expect(response.error).toBe(true);
+    expect(response.response).toContain('excedió el tiempo límite');
+  });
+  
+  test('audit logging failure does not block operation (REQ-6.6)', async () => {
+    // Mock DynamoDB audit write to fail
+    jest.spyOn(dynamodb, 'putItem').mockRejectedValue(
+      new Error('DynamoDB write failed')
+    );
+    
+    const response = await handleGuardrailRejection({
+      session_id: 'test-session',
+      client_id: 'client-001',
+      message: '¿Cuál es el número completo de mi tarjeta?'
+    });
+    
+    // Operation should continue despite audit failure
+    expect(response.guardrail_triggered).toBe(true);
+    expect(response.response).toContain('Protegido por Guardrails');
+    // Response must NOT throw or block
+  });
 });
 ```
 
@@ -2853,6 +2939,11 @@ describe('Property: Gastos Hormiga Identification', () => {
           // Percentage calculation must be accurate
           const expectedPercentage = (result.total_amount / income) * 100;
           expect(result.percentage_of_income).toBeCloseTo(expectedPercentage, 2);
+          
+          // Alert threshold: ≥15% triggers alert regardless of absolute amounts (REQ-2.5)
+          if (expectedPercentage >= 15) {
+            expect(result.alert_triggered).toBe(true);
+          }
         }
       ),
       { numRuns: 100 }
@@ -2861,7 +2952,39 @@ describe('Property: Gastos Hormiga Identification', () => {
 });
 ```
 
-**Property 5: Subscription Pattern Detection**
+**Property 4: Gastos Hormiga Alert Threshold**
+
+```typescript
+// tests/property/gastos-hormiga-alert.property.test.ts
+describe('Property: Gastos Hormiga Alert Threshold', () => {
+  test('Feature: asistente-salud-financiera-agentico, Property 4: For any income level, alert triggers at ≥15% regardless of absolute amounts', () => {
+    fc.assert(
+      fc.property(
+        fc.float({ min: 100, max: 10000 }), // monthly_income (any level)
+        fc.float({ min: 0, max: 1 }), // percentage factor
+        (income, factor) => {
+          // Create transactions where gastos hormiga = income * factor
+          const gastosHormigaTotal = income * factor;
+          const percentage = (gastosHormigaTotal / income) * 100;
+          
+          const transactions = generateGastosHormigaTransactions(gastosHormigaTotal);
+          const result = analyzeGastosHormiga(transactions, income);
+          
+          // Alert must trigger at ≥15% regardless of absolute amount or income level
+          if (percentage >= 15) {
+            expect(result.alert_triggered).toBe(true);
+            expect(result.recommendations).toBeDefined();
+            expect(result.recommendations.length).toBeGreaterThan(0);
+          } else {
+            expect(result.alert_triggered).toBe(false);
+          }
+        }
+      ),
+      { numRuns: 100 }
+    );
+  });
+});
+```
 
 ```typescript
 // tests/property/subscription-detection.property.test.ts
@@ -3298,8 +3421,8 @@ This design document provides a comprehensive blueprint for the **Asistente de S
 
 ---
 
-**Document Version:** 1.0.0  
-**Last Updated:** 2026-05-21
+**Document Version:** 1.1.0  
+**Last Updated:** 2026-05-21  
 **Authors:** Kiro AI Agent (Spec Workflow: Requirements-First)  
-**Review Status:** Ready for User Review
+**Review Status:** Updated with requirements clarifications (REQ-1.6, REQ-2.5, REQ-5.3, REQ-5.5, REQ-6.6, REQ-7.2)
 
