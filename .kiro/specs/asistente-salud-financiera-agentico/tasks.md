@@ -1,5 +1,9 @@
 # Implementation Plan: Asistente de Salud Financiera Agéntico
 
+## Overview
+
+Este plan de implementación está diseñado para un **hackathon de 24-48 horas**. El enfoque prioriza funcionalidades demostrables con alto impacto visual usando el Design System de Banco Bolivariano. La arquitectura usa Amazon Bedrock Agents como orquestador central, 4 Lambda Functions (Python 3.12) para Action Groups, DynamoDB para datos transaccionales, S3 para Knowledge Base, y frontend React/Next.js.
+
 ## Task Dependency Graph
 
 ```mermaid
@@ -98,11 +102,67 @@ graph TD
     T42 --> T43
 ```
 
+```json
+{
+  "waves": [
+    {
+      "wave": 1,
+      "description": "Infrastructure setup - no dependencies",
+      "tasks": [1, 2, 3, 5, 13, 14, 36]
+    },
+    {
+      "wave": 2,
+      "description": "Data generation and base components",
+      "tasks": [4, 6, 15, 16, 30]
+    },
+    {
+      "wave": 3,
+      "description": "Lambda functions and financial components",
+      "tasks": [7, 8, 9, 10, 17, 18, 19, 20, 21, 22, 23, 24, 31, 34]
+    },
+    {
+      "wave": 4,
+      "description": "Integration and streaming",
+      "tasks": [11, 25, 32, 35, 37]
+    },
+    {
+      "wave": 5,
+      "description": "End-to-end integration and QA",
+      "tasks": [12, 26, 33]
+    },
+    {
+      "wave": 6,
+      "description": "QA, responsiveness, and demo prep",
+      "tasks": [27, 38]
+    },
+    {
+      "wave": 7,
+      "description": "Final verification and demo",
+      "tasks": [28, 39]
+    },
+    {
+      "wave": 8,
+      "description": "Presentation prep",
+      "tasks": [29, 40]
+    },
+    {
+      "wave": 9,
+      "description": "Slide deck and rehearsal",
+      "tasks": [41, 42, 43]
+    }
+  ]
+}
+```
+
 ## Tasks
 
 ### ÉPICA E1: Setup Base (Bedrock Agent + Knowledge Base + Guardrails)
 
+<<<<<<< HEAD
 - [x] 1. Configurar Amazon Bedrock Agent con Claude 3.5 Sonnet
+=======
+- [~] 1. Configurar Amazon Bedrock Agent con Claude 3.5 Sonnet
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
   - Crear Agent con nombre `financial-health-assistant-agent`
   - Configurar system prompt con personalidad de asesor financiero ecuatoriano
   - Definir 4 Action Groups con OpenAPI schemas (ISF, Analyzer, Alerter, SessionMgr)
@@ -110,7 +170,11 @@ graph TD
   - _Requirements: 1.1, 7.1, 7.3, 7.4_
   - _Estimación: 2h_
 
+<<<<<<< HEAD
 - [x] 2. Configurar Knowledge Base con productos financieros
+=======
+- [~] 2. Configurar Knowledge Base con productos financieros
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
   - Crear S3 bucket `financial-assistant-kb-docs-{account-id}`
   - Subir 5 documentos PDF de productos Banco Bolivariano (cuentas, tarjetas, inversiones, créditos, seguros)
   - Configurar Knowledge Base con Amazon Titan Embeddings G1
@@ -119,7 +183,11 @@ graph TD
   - _Requirements: 5.1, 5.2_
   - _Estimación: 2h_
 
+<<<<<<< HEAD
 - [x] 3. Configurar Guardrails de seguridad
+=======
+- [~] 3. Configurar Guardrails de seguridad
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
   - Crear Guardrail `financial-assistant-guardrails`
   - Configurar PII filters: BLOCK para CREDIT_CARD y PIN, ANONYMIZE para EMAIL/PHONE/NAME
   - Configurar Topic filters: bloquear consultas de otros clientes, datos completos de tarjetas, PINs
@@ -129,7 +197,11 @@ graph TD
   - _Requirements: 6.1, 6.2, 6.3, 6.4, 6.5_
   - _Estimación: 1.5h_
 
+<<<<<<< HEAD
 - [x] 4. Checkpoint - Verificar setup base funcional
+=======
+- [~] 4. Checkpoint - Verificar setup base funcional
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
   - Probar invocación del Agent con consulta simple
   - Verificar que Guardrails bloquea consulta prohibida (ej: "¿Cuál es mi PIN?")
   - Verificar que Knowledge Base responde pregunta sobre productos
@@ -140,28 +212,45 @@ graph TD
 
 ### ÉPICA E2: Action Groups (Lambda Functions)
 
+<<<<<<< HEAD
 - [x] 5. Crear DynamoDB tables para datos transaccionales
   - [x] 5.1 Crear tabla `financial-assistant-transactions`
+=======
+- [ ] 5. Crear DynamoDB tables para datos transaccionales
+  - [~] 5.1 Crear tabla `financial-assistant-transactions`
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
     - Partition Key: `client_id`, Sort Key: `transaction_id`
     - Atributos: `amount`, `category`, `merchant`, `date`, `type`
     - GSI: `date-index` (PK: client_id, SK: date)
     - Configurar On-Demand billing
     - _Requirements: 8.3_
     - _Estimación: 0.5h_
+<<<<<<< HEAD
   - [x] 5.2 Crear tabla `financial-assistant-sessions`
+=======
+  - [~] 5.2 Crear tabla `financial-assistant-sessions`
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
     - Partition Key: `session_id`, Sort Key: `timestamp`
     - Atributos: `client_id`, `message`, `response`, `action_groups_invoked`, `guardrail_triggered`
     - Configurar TTL attribute (90 días)
     - _Requirements: 8.1, 8.5_
     - _Estimación: 0.5h_
+<<<<<<< HEAD
   - [x] 5.3 Crear tabla `financial-assistant-clients` con datos demo
+=======
+  - [~] 5.3 Crear tabla `financial-assistant-clients` con datos demo
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
     - Partition Key: `client_id`
     - Insertar 3 clientes demo: María (ISF 75), Carlos (ISF 45), Ana (ISF 28)
     - Cada cliente con perfil completo: ingresos, gastos fijos, ahorros, deudas
     - _Requirements: 8.4_
     - _Estimación: 0.5h_
 
+<<<<<<< HEAD
 - [x] 6. Generar datos transaccionales simulados realistas
+=======
+- [~] 6. Generar datos transaccionales simulados realistas
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
   - Crear script Python para generar 60-80 transacciones/mes por cliente
   - Distribuir transacciones en categorías: salary, groceries, restaurants, coffee_snacks, transport, subscriptions, utilities
   - Incluir gastos hormiga identificables (<$10, frecuentes)
@@ -171,7 +260,7 @@ graph TD
   - _Estimación: 1.5h_
 
 - [ ] 7. Implementar Lambda L1: ISF Calculator
-  - [x] 7.1 Crear función Lambda en Python 3.12
+  - [~] 7.1 Crear función Lambda en Python 3.12
     - Implementar cálculo de ISF con 4 componentes: ratio ingresos/gastos (30%), nivel de ahorro (25%), carga de deuda (25%), estabilidad de ingresos (20%)
     - Fórmulas: ratio = min(100, (ingresos/gastos)*50), ahorro = (ahorro_mensual/ingresos)*100, deuda = max(0, 100-(deuda_total/ingresos_anuales)*100), estabilidad = 100-(std_dev/mean)*100
     - Retornar JSON con `isf_score`, `interpretation`, `components`
@@ -185,7 +274,11 @@ graph TD
     - _Estimación: 1h_
 
 - [ ] 8. Implementar Lambda L2: Transaction Analyzer
+<<<<<<< HEAD
   - [x] 8.1 Implementar análisis de gastos hormiga
+=======
+  - [~] 8.1 Implementar análisis de gastos hormiga
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
     - Filtrar transacciones <$10 USD del último mes
     - Agrupar por categoría y calcular total por categoría
     - Ordenar por monto total y retornar top 3
@@ -193,7 +286,11 @@ graph TD
     - Generar alerta si ≥15% del ingreso (independiente del monto absoluto)
     - _Requirements: 2.1, 2.2, 2.3, 2.4, 2.5_
     - _Estimación: 1.5h_
+<<<<<<< HEAD
   - [x] 8.2 Implementar detección de suscripciones
+=======
+  - [~] 8.2 Implementar detección de suscripciones
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
     - Analizar transacciones de últimos 3 meses
     - Detectar patrones: mismo merchant, monto ±$2, frecuencia mensual
     - Clasificar por categoría: streaming, software, gimnasio, servicios digitales
@@ -208,15 +305,24 @@ graph TD
     - _Requirements: 2.2, 2.5, 3.2_
     - _Estimación: 1h_
 
+<<<<<<< HEAD
 - [~] 9. Implementar Lambda L3: Liquidity Alerter
   - [x] 9.1 Implementar proyección de liquidez
+=======
+- [ ] 9. Implementar Lambda L3: Liquidity Alerter
+  - [~] 9.1 Implementar proyección de liquidez
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
     - Calcular gastos promedio diarios (últimos 30 días)
     - Proyectar saldo a N días: current_balance - (avg_daily_spend * N)
     - Generar alerta si current_balance < 1.2 * monthly_fixed_expenses
     - Determinar alert_level: none, warning, critical
     - _Requirements: 4.1, 4.2_
     - _Estimación: 1.5h_
+<<<<<<< HEAD
   - [x] 9.2 Implementar evaluación de compras
+=======
+  - [~] 9.2 Implementar evaluación de compras
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
     - Evaluar si purchase_amount compromete liquidez
     - Generar recomendación específica: reducir gastos variables, diferir compras, transferir desde ahorros
     - _Requirements: 4.3, 4.6_
@@ -228,7 +334,11 @@ graph TD
     - _Requirements: 4.2, 4.3_
     - _Estimación: 1h_
 
+<<<<<<< HEAD
 - [-] 10. Implementar Lambda L4: Session Manager
+=======
+- [~] 10. Implementar Lambda L4: Session Manager
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
   - Implementar operaciones CRUD para conversaciones
   - Operación save: guardar turno de conversación en DynamoDB (non-blocking audit logging: si falla la escritura, continuar sin bloquear)
   - Operación retrieve: recuperar últimas 5 conversaciones del cliente
@@ -255,7 +365,11 @@ graph TD
 
 ### ÉPICA E3: Frontend Demo (Chat UI con Design System BB)
 
+<<<<<<< HEAD
 - [-] 13. Generar archivo bb-tokens.css con Design System Bolivariano
+=======
+- [~] 13. Generar archivo bb-tokens.css con Design System Bolivariano
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
   - Crear archivo `styles/bb-tokens.css` con todos los tokens CSS
   - Tokens de color: `--bb-primary-500: #008292`, `--bb-bg-body: #edeef3`, `--bb-bg-primary: #008292`, `--bb-bg-surface: #ffffff`
   - Tokens de estado: `--bb-state-warning-bg`, `--bb-state-warning-border`, `--bb-state-info-bg`, `--bb-state-info-border`
@@ -266,7 +380,11 @@ graph TD
   - _Requirements: 7.5_
   - _Estimación: 1h_
 
+<<<<<<< HEAD
 - [-] 14. Configurar Next.js project con TypeScript
+=======
+- [~] 14. Configurar Next.js project con TypeScript
+>>>>>>> 6bca9e91169cbf6090d4128a01d71d225e1313f7
   - Inicializar proyecto Next.js 14+ con App Router
   - Configurar TypeScript con strict mode
   - Instalar dependencias: `aws-sdk`, `@aws-sdk/client-bedrock-agent-runtime`
@@ -601,3 +719,56 @@ graph TD
     - Slide 12: Impacto esperado (+15% ahorro, -20% mora)
     - _Requirements: NFR Demostrabilidad_
     - _Estimación: 0.5h_
+
+- [~] 42. Preparar script de presentación (5 minutos)
+  - Introducción: 30 segundos (problema + solución)
+  - Arquitectura: 1 minuto (stack técnico + decisiones clave)
+  - Demo live: 2.5 minutos (3 flujos)
+  - Métricas: 30 segundos (evaluación + performance)
+  - Roadmap: 30 segundos (próximos pasos)
+  - _Requirements: NFR Demostrabilidad_
+  - _Estimación: 0.5h_
+
+- [~] 43. Ensayar presentación con todo el equipo
+  - Practicar transiciones entre slides y demo
+  - Verificar timing (5 minutos máximo)
+  - Preparar respuestas a preguntas frecuentes del jurado
+  - _Requirements: NFR Demostrabilidad_
+  - _Estimación: 0.5h_
+
+## Notes
+
+### Priorización MoSCoW para Hackathon
+
+| Prioridad | Épicas | Descripción |
+|-----------|--------|-------------|
+| **Must Have** | E1, E2, E3, E4, E8, E9 | Funcionalidades core para demo funcional |
+| **Should Have** | E5, E6, E7 | Mejoran credibilidad técnica pero no bloquean demo |
+| **Nice to Have** | — | Fine-tuning, A/B testing, integración core bancario (fuera de alcance) |
+
+### Clarificaciones de Requisitos Incorporadas
+
+- **REQ-1.6 / REQ-7.2:** Latencia estrictamente < 3s (no exactamente 3). Timeout con fallback.
+- **REQ-2.5:** Alerta gastos hormiga se dispara con ≥15% del ingreso, independiente del monto absoluto.
+- **REQ-5.3:** Badge de citación solo se muestra cuando la info del KB es suficiente.
+- **REQ-5.5:** Indicar que no hay info disponible, sin obligar a sugerir contacto con asesor.
+- **REQ-6.6:** Si el audit logging falla, continuar sin bloquear la operación del cliente.
+
+### Definition of Done — Hackathon
+
+Cada tarea se considera completa cuando cumple TODOS estos criterios:
+
+- ✅ Funciona en entorno demo sin intervención manual
+- ✅ Tiene al menos un test automatizado o script de evaluación que pasa
+- ✅ Está documentada en README con instrucciones de despliegue
+- ✅ Ha sido revisada por al menos un miembro del equipo diferente al autor
+- ✅ El frontend usa exclusivamente tokens `var(--bb-...)` — cero valores hardcodeados
+- ✅ Los componentes muestran Lexend como tipografía — verificado en DevTools → Fonts
+- ✅ Está incluida en el deck de presentación al jurado
+
+### Checkpoints Go/No-Go
+
+- **Hora 4 (24h) / Hora 8 (48h):** Agent responde + Guardrails funcionan
+- **Hora 8 (24h) / Hora 16 (48h):** ISF Calculator funciona + Chat UI renderiza
+- **Hora 12-16 (24h) / Hora 24-32 (48h):** Fidelidad DS 100% (CRÍTICO)
+- **Hora 20 (24h) / Hora 40 (48h):** 3 flujos demo funcionan + video backup
