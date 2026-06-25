@@ -360,3 +360,244 @@ graph TD
   - Incluir título del documento y enlace (si disponible)
   - _Requirements: 5.3, 5.6_
   - _Estimación: 0.5h_
+
+- [ ] 23. Crear componente BBQuickActionChips
+  - Chips de acciones rápidas: "Calcular mi ISF", "Ver gastos hormiga", "Revisar suscripciones", "Proyectar liquidez"
+  - Estilo: outline con `var(--bb-primary-500)` como border
+  - Hover state con fondo `var(--bb-primary-500)` y texto blanco
+  - _Requirements: 7.4_
+  - _Estimación: 0.5h_
+
+- [ ] 24. Crear componente BBChatInput
+  - Input de texto con botón de envío
+  - Border: `var(--bb-primary-500)` en focus
+  - Botón de envío con fondo `var(--bb-primary-500)`
+  - Placeholder: "Escribe tu consulta financiera..."
+  - _Requirements: 7.4_
+  - _Estimación: 0.5h_
+
+- [ ] 25. Implementar streaming de respuestas del agente
+  - [ ] 25.1 Configurar WebSocket o Server-Sent Events para streaming
+    - Conectar con API Gateway WebSocket endpoint
+    - Manejar eventos: chunk, complete, error
+    - Implementar timeout estricto < 3s con fallback message (REQ-7.2)
+    - _Requirements: 7.1, 7.2_
+    - _Estimación: 1h_
+  - [ ] 25.2 Implementar animación de "pensando"
+    - Indicador visual mientras Agent procesa consulta
+    - Usar animación del Design System BB (dots pulsantes)
+    - Mostrar texto: "Analizando tus finanzas..."
+    - _Requirements: 7.6_
+    - _Estimación: 0.5h_
+  - [ ] 25.3 Implementar cursor parpadeante durante streaming
+    - Cursor animado al final del texto mientras se recibe streaming
+    - Desaparecer cuando streaming completa
+    - _Requirements: 7.1_
+    - _Estimación: 0.5h_
+
+- [ ] 26. Implementar lógica de integración con Bedrock Agent
+  - Crear API route `/api/agent/invoke` en Next.js
+  - Integrar con `@aws-sdk/client-bedrock-agent-runtime`
+  - Manejar respuestas: texto, action_groups_invoked, sources, guardrail_triggered
+  - Parsear respuestas y renderizar componentes apropiados (ISFCard, GastosHormigaList, etc.)
+  - Implementar timeout estricto < 3s con mensaje de fallback al cliente
+  - _Requirements: 1.1, 7.1, 7.2_
+  - _Estimación: 2h_
+
+- [ ] 27. Revisar fidelidad al Design System en todos los componentes
+  - **Checkpoint obligatorio:** Revisar UI contra JSON de tokens
+  - Verificar que TODOS los colores usan `var(--bb-...)` — cero valores hardcodeados
+  - Verificar que tipografía Lexend carga correctamente (DevTools → Fonts)
+  - Verificar espaciado consistente entre componentes
+  - Verificar sombras usando `var(--bb-shadow-card)`
+  - _Requirements: 7.5_
+  - _Estimación: 1h_
+
+- [ ] 28. Implementar responsividad para móvil
+  - Probar en viewport 328px (móvil pequeño)
+  - Ajustar layout de burbujas de chat para móvil
+  - Ajustar tarjetas financieras para stack vertical en móvil
+  - Verificar que Quick Action Chips se ajustan en móvil
+  - _Requirements: NFR Responsividad_
+  - _Estimación: 1h_
+
+- [ ] 29. Checkpoint - Verificar frontend funcional end-to-end
+  - Probar flujo completo: enviar mensaje → streaming → renderizar componentes financieros
+  - Verificar que Guardrails badge aparece cuando se bloquea consulta
+  - Verificar que Knowledge Base badge aparece solo cuando info es suficiente (REQ-5.3)
+  - Verificar timeout con fallback cuando respuesta excede 3s (REQ-7.2)
+  - Verificar fidelidad 100% al Design System
+  - Ensure all tests pass, ask the user if questions arise.
+  - _Estimación: 1h_
+
+---
+
+### ÉPICA E4: Tokens CSS (Validación y Lint)
+
+- [ ] 30. Crear script de validación de Design System
+  - Script que escanea todos los archivos `.tsx` y `.css`
+  - Detectar valores hardcodeados de colores (hex, rgb) que deberían usar tokens
+  - Detectar uso de fuentes que no sean Lexend
+  - Generar reporte de violaciones
+  - _Requirements: 7.5_
+  - _Estimación: 1.5h_
+
+- [ ] 31. Integrar DS lint check en pre-commit hook
+  - Configurar Husky o similar para ejecutar DS validation script
+  - Bloquear commit si hay violaciones de Design System
+  - _Requirements: 7.5_
+  - _Estimación: 0.5h_
+
+---
+
+### ÉPICA E5: Evaluación LLM (FMEval)
+
+- [ ] 32. Crear dataset de evaluación para el agente
+  - Crear archivo JSON con 20-30 pares pregunta-respuesta esperada
+  - Incluir casos: cálculo ISF, gastos hormiga, suscripciones, liquidez, Knowledge Base, Guardrails
+  - Formato compatible con FMEval
+  - _Requirements: NFR Demostrabilidad_
+  - _Estimación: 1h_
+
+- [ ] 33. Implementar script de evaluación con FMEval
+  - [ ] 33.1 Configurar FMEval con Bedrock Model Runner
+    - Instalar `fmeval` library
+    - Configurar BedrockModelRunner con Claude 3.5 Sonnet
+    - _Requirements: NFR Demostrabilidad_
+    - _Estimación: 0.5h_
+  - [ ] 33.2 Ejecutar evaluaciones de Faithfulness y QA Accuracy
+    - Ejecutar Faithfulness eval (respuestas fieles a Knowledge Base)
+    - Ejecutar QA Accuracy eval (respuestas correctas a preguntas financieras)
+    - Generar reporte con métricas
+    - _Requirements: NFR Demostrabilidad_
+    - _Estimación: 1h_
+  - [ ] 33.3 Crear visualización de resultados de evaluación
+    - Generar gráficos de métricas (Faithfulness score, QA Accuracy)
+    - Incluir en slide deck de presentación
+    - _Requirements: NFR Demostrabilidad_
+    - _Estimación: 0.5h_
+
+---
+
+### ÉPICA E6: Observabilidad (CloudWatch)
+
+- [ ] 34. Configurar CloudWatch Logs para Lambda Functions
+  - Habilitar logging estructurado en las 4 Lambdas
+  - Log format: JSON con campos: timestamp, level, message, client_id, latency_ms
+  - Configurar log retention: 7 días para demo
+  - _Requirements: 8.5_
+  - _Estimación: 0.5h_
+
+- [ ] 35. Crear CloudWatch Dashboard
+  - [ ] 35.1 Crear métricas custom
+    - Métrica: AgentLatency (P50, P95, P99) — alarma si P95 ≥ 3000ms (estrictamente < 3s)
+    - Métrica: GuardrailBlockRate (% de consultas bloqueadas)
+    - Métrica: TokensPerSession (promedio)
+    - Métrica: ErrorRate (por Action Group)
+    - _Requirements: NFR Performance_
+    - _Estimación: 1h_
+  - [ ] 35.2 Crear dashboard con 6 widgets
+    - Widget 1: Latencia del Agent (line chart)
+    - Widget 2: Guardrails block rate (gauge)
+    - Widget 3: Tokens por sesión (bar chart)
+    - Widget 4: Error rate por Lambda (stacked area)
+    - Widget 5: Invocaciones por Action Group (pie chart)
+    - Widget 6: Costos estimados (number widget)
+    - _Requirements: NFR Demostrabilidad_
+    - _Estimación: 1h_
+
+---
+
+### ÉPICA E7: CI/CD Pipeline (IaC CDK)
+
+- [ ] 36. Crear CDK stacks para infraestructura
+  - [ ] 36.1 Crear BedrockStack
+    - Definir Bedrock Agent con CDK
+    - Definir Knowledge Base con S3 data source
+    - Definir Guardrails
+    - _Requirements: NFR Demostrabilidad_
+    - _Estimación: 1.5h_
+  - [ ] 36.2 Crear LambdaStack
+    - Definir 4 Lambda Functions con CDK
+    - Configurar IAM roles y permisos
+    - Asociar Lambdas a Action Groups
+    - _Requirements: NFR Demostrabilidad_
+    - _Estimación: 1h_
+  - [ ] 36.3 Crear DataStack
+    - Definir 3 DynamoDB tables con CDK
+    - Definir S3 bucket para Knowledge Base
+    - Configurar lifecycle policies
+    - _Requirements: NFR Demostrabilidad_
+    - _Estimación: 0.5h_
+
+- [ ] 37. Configurar GitHub Actions para CI/CD
+  - Pipeline de CI: lint, test, DS validation
+  - Pipeline de CD: deploy CDK stacks a AWS
+  - Configurar secrets para AWS credentials
+  - _Requirements: NFR Demostrabilidad_
+  - _Estimación: 1h_
+
+---
+
+### ÉPICA E8: Demo Flows (Scripts y Datos)
+
+- [ ] 38. Crear scripts de demo para los 3 flujos principales
+  - [ ] 38.1 Script Flujo 1: Diagnóstico de Salud Financiera
+    - Input: "Hola, ¿cómo está mi salud financiera este mes?"
+    - Verificar: ISF calculado, componentes mostrados, colores correctos
+    - _Requirements: 1.1, 1.4, 1.5_
+    - _Estimación: 0.5h_
+  - [ ] 38.2 Script Flujo 2: Detección de Gastos Hormiga
+    - Input: "¿En qué estoy gastando de más?"
+    - Verificar: Top 3 categorías, alerta si ≥15%, badge warning
+    - _Requirements: 2.1, 2.4, 2.5_
+    - _Estimación: 0.5h_
+  - [ ] 38.3 Script Flujo 3: Guardrails en Acción
+    - Input: "¿Cuál es mi PIN?"
+    - Verificar: Consulta bloqueada, badge Guardrails visible, mensaje de rechazo
+    - _Requirements: 6.1, 6.2, 6.4_
+    - _Estimación: 0.5h_
+
+- [ ] 39. Preparar datos demo para presentación
+  - Seleccionar cliente demo con perfil interesante (Carlos - ISF 45)
+  - Verificar que datos transaccionales generan insights demostrables
+  - Preparar respuestas esperadas para cada flujo
+  - _Requirements: NFR Datos de Demostración_
+  - _Estimación: 0.5h_
+
+- [ ] 40. Grabar video de backup de demo funcional
+  - Grabar screencast de los 3 flujos principales funcionando
+  - Duración: 3-4 minutos
+  - Plan B en caso de problemas técnicos durante presentación
+  - _Requirements: NFR Demostrabilidad_
+  - _Estimación: 0.5h_
+
+---
+
+### ÉPICA E9: Presentación al Jurado
+
+- [ ] 41. Crear slide deck de presentación
+  - [ ] 41.1 Slides de problema y solución
+    - Slide 1: Pitch de una línea
+    - Slide 2: Problema cuantificado (70% consultan solo en crisis, 63% desconoce gastos)
+    - Slide 3: Solución (Agente conversacional con ISF)
+    - _Requirements: NFR Demostrabilidad_
+    - _Estimación: 0.5h_
+  - [ ] 41.2 Slides de arquitectura técnica
+    - Slide 4: Diagrama de arquitectura (Bedrock Agent + Lambdas + DynamoDB + S3)
+    - Slide 5: Stack técnico (Claude 3.5 Sonnet, Guardrails, Knowledge Base, FMEval)
+    - Slide 6: Decisiones técnicas clave (Agent vs custom, RAG vs fine-tuning)
+    - _Requirements: NFR Demostrabilidad_
+    - _Estimación: 1h_
+  - [ ] 41.3 Slides de métricas y resultados
+    - Slide 7: Métricas de evaluación (Faithfulness, QA Accuracy)
+    - Slide 8: Métricas de performance (P95 latency estrictamente < 3s, Guardrails block rate)
+    - Slide 9: Fidelidad al Design System (screenshots comparativos)
+    - _Requirements: NFR Demostrabilidad_
+    - _Estimación: 0.5h_
+  - [ ] 41.4 Slides de demo y roadmap
+    - Slide 10: Demo live (3 flujos principales)
+    - Slide 11: Roadmap post-hackathon (fine-tuning, A/B testing, integración core)
+    - Slide 12: Impacto esperado (+15% ahorro, -20% mora)
+    - _Requirements: NFR Demostrabilidad_
+    - _Estimación: 0.5h_
